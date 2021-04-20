@@ -13,7 +13,7 @@ The code is very similar to my [ESP32-room-sensor](https://github.com/msgarbossa
 
 ## Parts
 
-- [ESP32 devkit - 30 pin, integrated antenna](https://www.aliexpress.com/item/1005001267643044.html).  I have a few 38-pin [ESP32-WROOM-32U](https://www.aliexpress.com/item/32807887667.html) boards w/ external antennas I want to try since the signal tends to be weak where I have these placed.
+- [ESP32 devkit - 30 pin, integrated antenna](https://www.aliexpress.com/item/1005001267643044.html) or 38-pin [ESP32-WROOM-32U](https://www.aliexpress.com/item/32807887667.html) w/ [external antenna](https://www.aliexpress.com/item/4001041396823.html) for better range.
 - [inexepensive cases (10-pack)](https://www.amazon.com/gp/product/B07HKWNB93/). I'd like to make a small 3D printed case, but these aren't placed where they are visible anyway.
 - [thumbtacks](https://www.amazon.com/gp/product/B0019IGM0E/) (200-count)
 - [alarm wire](https://www.amazon.com/gp/product/B01CT06M0A/) (500')
@@ -55,3 +55,11 @@ The functions to the left of each of the orange metric nodes simply reformat the
 ## Over the Air (OTA) Updates
 
 OTA updates seem more commonly used with sensors that do not utilize deep sleep.  To get OTA updates to work and minimize the wake time, the bootcount variable is used with RTC_DATA_ATTR to maintain the number of times the ESP32 wakes from sleep after being powered on.  The OTA update is only checked the first time the ESP32 is powered on.  The OTA update process works the same is it normally would except that the ESP32 needs a hard restart to reset the counter to zero and check for the update.  The IP address of the ESP32 needs to be updated in platform.ini file and the upload_port entry for USB needs to be commented out.
+
+## Integrated Antenna vs External Antenna
+
+The yellow line in the graph shows the signal strength for the laundry room sensor.  At about 21:00, I switched this sensor from the 30-pin ESP32 with integrated antenna to the 38-pin with a simple external antenna.
+
+![antenna-signal](/img/signal-after-antenna.png)
+
+The laundry room sensor has consistently had the worst signal of any of my ESP32 boards.  With the integrated antenna and being stuck behind a washing machine and dryer, it often has a signal of about -80db.  Occassionally it would seem to miss reporting in, possibly due timeout or connection drops.  With the integrated antennas, the best I get in the same room is about -55db.  After using the [38-pin ESP32-WROOM-32U](https://www.aliexpress.com/item/32807887667.html) w/ [external antenna](https://www.aliexpress.com/item/4001041396823.html), I was getting -40 to -50db.  In the same location in the laundry room, it's now getting -60db.  I highly recommend the external antenna if it fits the application and asthetics are not as important.  I find the ESP32 boards with integrated antennas will have the poorest connection even when other WiFi devices are working fine.  When the signal gets into the -75 to -80 range is when I start running into problem.  The WiFi connections will also take substantially longer, which translates to more awake time for devices using deep sleep.
