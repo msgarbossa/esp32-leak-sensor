@@ -1,0 +1,244 @@
+[
+    {
+        "id": "406b88a6.c2503",
+        "type": "mqtt in",
+        "z": "2207dacb.44a88e",
+        "name": "mqtt-leak1",
+        "topic": "home/leak1/metrics",
+        "qos": "0",
+        "datatype": "auto",
+        "broker": "ee701ac3.03ed3",
+        "x": 80,
+        "y": 1320,
+        "wires": [
+            [
+                "4f34b62f.3a4be"
+            ]
+        ]
+    },
+    {
+        "id": "4f34b62f.3a4be",
+        "type": "json",
+        "z": "2207dacb.44a88e",
+        "name": "json-leak1",
+        "property": "payload",
+        "action": "",
+        "pretty": false,
+        "x": 290,
+        "y": 1320,
+        "wires": [
+            [
+                "3a872ab9.f8f40e"
+            ]
+        ]
+    },
+    {
+        "id": "3a872ab9.f8f40e",
+        "type": "function",
+        "z": "2207dacb.44a88e",
+        "name": "func-leak1-filter",
+        "func": "if (\"w\" in msg.payload) {\n    return msg;\n} else {\n    return;\n}",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 460,
+        "y": 1260,
+        "wires": [
+            [
+                "cfa1253e.b1b2a8"
+            ]
+        ]
+    },
+    {
+        "id": "cfa1253e.b1b2a8",
+        "type": "function",
+        "z": "2207dacb.44a88e",
+        "name": "func-leak1-health",
+        "func": "d = new Date();\ncurrentMilli = d.getTime();\nif (msg.payload == \"healthcheck\") {\n    lastMilli = context.get(\"lastUpdate\");\n    if ((currentMilli - lastMilli) > 1200000) {\n        if (context.get(\"status\") == \"offline\") {\n            return null;\n        } else {\n            context.set(\"status\", \"offline\");\n            node.status({fill:\"red\",shape:\"ring\",text:\"disconnected\"});\n            var newPayload = {};\n            for (var key in context.get(\"lastPayload\")) {\n                newPayload[key] = 0;\n            }\n            var newMsg = { payload: newPayload };\n            return newMsg;\n        }\n    } else {\n        context.set(\"status\", \"online\");\n    }\n} else {\n    context.set(\"key_cache\", Object.keys(msg.payload));\n    context.set(\"lastPayload\", msg.payload);\n    context.set(\"lastUpdate\", currentMilli);\n    node.status({fill:\"green\",shape:\"dot\",text:\"connected\"});\n    return msg;\n}",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "// Code added here will be run once\n// whenever the node is deployed.\nd = new Date();\nif (context.get(\"lastUpdate\") == undefined) {\n    context.set(\"lastUpdate\", d.getTime())\n}\ncontext.set(\"key_cache\", []);\n// node.status({});   // clear the status",
+        "finalize": "",
+        "x": 510,
+        "y": 1320,
+        "wires": [
+            [
+                "d6aa8aa6.d6507",
+                "4d05a353.126f94",
+                "6399ea6e.97b89c"
+            ]
+        ]
+    },
+    {
+        "id": "d6aa8aa6.d6507",
+        "type": "debug",
+        "z": "2207dacb.44a88e",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 750,
+        "y": 1280,
+        "wires": []
+    },
+    {
+        "id": "4d05a353.126f94",
+        "type": "function",
+        "z": "2207dacb.44a88e",
+        "name": "func-leak1-leak",
+        "func": "var metric = {\n    \"op\": \"set\",\n    \"val\": msg.payload.w\n}\nvar newMsg = { payload: metric };\nreturn newMsg;\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 760,
+        "y": 1320,
+        "wires": [
+            [
+                "6ffb5253.c4a744",
+                "69dd679d.f3e17"
+            ]
+        ]
+    },
+    {
+        "id": "6ffb5253.c4a744",
+        "type": "function",
+        "z": "2207dacb.44a88e",
+        "name": "leak1-leak-alert",
+        "func": "currentStatus = msg.payload.val;\n\nif (context.get(\"lastStatus\") == undefined) {\n    context.set(\"lastStatus\", currentStatus)\n    return null;\n}\n\nif (currentStatus != context.get(\"lastStatus\")) {\n    context.set(\"lastStatus\", currentStatus)\n    var sensor=msg.topic;\n    if (currentStatus == 1) {\n        state = sensor + \" WET\";\n    } else {\n        state = sensor + \"DRY\";\n    }\n    var newMsg = {\n        payload: state,\n        topic: \"#home\"\n    }\n    return newMsg;\n} else {\n    return null;\n}",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "context.set(\"lastStatus\", undefined);",
+        "finalize": "",
+        "x": 1040,
+        "y": 1320,
+        "wires": [
+            [
+                "d84e9f3f.ad4248"
+            ]
+        ]
+    },
+    {
+        "id": "d84e9f3f.ad4248",
+        "type": "slack-web-out",
+        "z": "2207dacb.44a88e",
+        "client": "b06cff83.04ca9",
+        "name": "slack",
+        "x": 1230,
+        "y": 1320,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "69dd679d.f3e17",
+        "type": "prometheus-exporter",
+        "z": "2207dacb.44a88e",
+        "name": "",
+        "metric": "52ef8708.2e591",
+        "x": 1030,
+        "y": 1280,
+        "wires": []
+    },
+    {
+        "id": "6399ea6e.97b89c",
+        "type": "function",
+        "z": "2207dacb.44a88e",
+        "name": "func-leak1-signal",
+        "func": "var metric = {\n    \"op\": \"set\",\n    \"val\": msg.payload.s\n}\nvar newMsg = { payload: metric };\nreturn newMsg;\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 770,
+        "y": 1360,
+        "wires": [
+            [
+                "84cee337.dfd31"
+            ]
+        ]
+    },
+    {
+        "id": "84cee337.dfd31",
+        "type": "prometheus-exporter",
+        "z": "2207dacb.44a88e",
+        "name": "",
+        "metric": "b41f6bf2.ee3be8",
+        "x": 1060,
+        "y": 1360,
+        "wires": []
+    },
+    {
+        "id": "e15ba256.0ff338",
+        "type": "inject",
+        "z": "2207dacb.44a88e",
+        "name": "inject-reaper",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "900",
+        "crontab": "",
+        "once": true,
+        "onceDelay": "1200",
+        "topic": "",
+        "payload": "healthcheck",
+        "payloadType": "str",
+        "x": 280,
+        "y": 1380,
+        "wires": [
+            [
+                "cfa1253e.b1b2a8"
+            ]
+        ]
+    },
+    {
+        "id": "ee701ac3.03ed3",
+        "type": "mqtt-broker",
+        "name": "mqtt-broker",
+        "broker": "10.10.1.100",
+        "port": "1883",
+        "clientid": "nodered",
+        "usetls": false,
+        "compatmode": false,
+        "keepalive": "30",
+        "cleansession": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": ""
+    },
+    {
+        "id": "b06cff83.04ca9",
+        "type": "slack-config",
+        "name": "slack-home-api"
+    },
+    {
+        "id": "52ef8708.2e591",
+        "type": "prometheus-metric-config",
+        "name": "leak1",
+        "help": "leak1 kitchen",
+        "labels": "",
+        "mtype": "gauge"
+    },
+    {
+        "id": "b41f6bf2.ee3be8",
+        "type": "prometheus-metric-config",
+        "name": "signal_leak1",
+        "help": "signal leak1",
+        "labels": "",
+        "mtype": "gauge"
+    }
+]

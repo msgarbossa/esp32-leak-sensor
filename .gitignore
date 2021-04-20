@@ -1,0 +1,7 @@
+.pio/
+.travis.yml
+.vscode/
+lib/
+include/
+fritzing/
+test/
